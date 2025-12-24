@@ -1,0 +1,410 @@
+{
+  "name": "rosting santa",
+  "nodes": [
+    {
+      "parameters": {
+        "updates": [
+          "messages"
+        ],
+        "options": {}
+      },
+      "type": "n8n-nodes-base.whatsAppTrigger",
+      "typeVersion": 1,
+      "position": [
+        -576,
+        -192
+      ],
+      "id": "2040f904-f2d1-4b6b-a636-38e769000256",
+      "name": "WhatsApp Trigger",
+      "webhookId": "4c3d0ef1-1ad9-4c9b-9053-5dae80f19ddb",
+      "credentials": {
+        "whatsAppTriggerApi": {
+          "id": "60mNK70GsWLaM6u1",
+          "name": "suraj"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "send",
+        "phoneNumberId": "={{ $('WhatsApp Trigger').first().json.metadata.phone_number_id }}",
+        "recipientPhoneNumber": "={{ $('WhatsApp Trigger').first().json.contacts[0].wa_id }}\n",
+        "textBody": "={{ $json.output }}",
+        "additionalFields": {}
+      },
+      "type": "n8n-nodes-base.whatsApp",
+      "typeVersion": 1.1,
+      "position": [
+        384,
+        64
+      ],
+      "id": "c033c17d-30fa-4bfa-a9bc-888cd989def1",
+      "name": "Send message",
+      "webhookId": "105383e9-950c-4bd7-9ded-31f7697e829c",
+      "credentials": {
+        "whatsAppApi": {
+          "id": "Nzl9RjJ461bBBX5g",
+          "name": "suraj"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "2fa58a3f-1335-4320-ba49-9ce57a2c6aa7",
+              "leftValue": "={{ $json.github_username }}",
+              "rightValue": "",
+              "operator": {
+                "type": "string",
+                "operation": "notEmpty",
+                "singleValue": true
+              }
+            },
+            {
+              "id": "7cafd82c-96b3-4e47-8fb7-58038965c75e",
+              "leftValue": "={{ $json.github_username.length }}",
+              "rightValue": 3,
+              "operator": {
+                "type": "number",
+                "operation": "gte"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        -160,
+        -192
+      ],
+      "id": "e4e83f84-b0fd-4a5f-855c-49b9f2cc201c",
+      "name": "If"
+    },
+    {
+      "parameters": {
+        "operation": "send",
+        "phoneNumberId": "={{ $('WhatsApp Trigger').first().json.metadata.phone_number_id }}",
+        "recipientPhoneNumber": "={{ $('WhatsApp Trigger').first().json.contacts[0].wa_id }}",
+        "textBody": "Enter a valid git username.",
+        "additionalFields": {}
+      },
+      "type": "n8n-nodes-base.whatsApp",
+      "typeVersion": 1.1,
+      "position": [
+        288,
+        -176
+      ],
+      "id": "abc1df1a-806a-48ae-a9fa-4760e81ae857",
+      "name": "Send message1",
+      "webhookId": "6c61adab-69a8-4f7a-94ff-6421d44a1bc7",
+      "credentials": {
+        "whatsAppApi": {
+          "id": "Nzl9RjJ461bBBX5g",
+          "name": "suraj"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "// WhatsApp Cloud API payload comes as an array\nconst entry = $json;\n\n// Safely extract values\nconst message = entry.messages?.[0];\nconst from = message?.from || null;\nconst textBody = message?.text?.body || \"\";\n\n// Normalize text\nconst cleanedText = textBody.trim().toLowerCase();\n\n// Split words\nconst words = cleanedText.split(/\\s+/);\n\n// Assume GitHub username is the last word\nconst githubUsername = words.length > 0 ? words[words.length - 1] : null;\n\nreturn [\n  {\n    json: {\n      from,\n      original_text: textBody,\n      github_username: githubUsername,\n    }\n  }\n];\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -352,
+        -192
+      ],
+      "id": "3ed0811e-8fdb-4d3d-8afc-529e2d3eb76e",
+      "name": "clean output"
+    },
+    {
+      "parameters": {
+        "url": "=https://api.github.com/users/{{ $json.github_username }}",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Accept",
+              "value": "application/vnd.github+json"
+            },
+            {
+              "name": "User-Agent",
+              "value": "n8n-santa-roast"
+            }
+          ]
+        },
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {}
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3,
+      "position": [
+        80,
+        -208
+      ],
+      "id": "a2cd9bcf-4587-4483-877a-ff2dcde654c5",
+      "name": "get git account"
+    },
+    {
+      "parameters": {
+        "url": "=https://api.github.com/users/{{ $json.login }}/repos",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "per_page",
+              "value": "10"
+            },
+            {
+              "name": "sort",
+              "value": "updated"
+            },
+            {
+              "name": "direction",
+              "value": "desc"
+            }
+          ]
+        },
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Accept",
+              "value": "application/vnd.github+json"
+            },
+            {
+              "name": "User-Agent",
+              "value": "n8n-santa-roast"
+            }
+          ]
+        },
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {}
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3,
+      "position": [
+        -512,
+        80
+      ],
+      "id": "4844c0b8-320d-43a0-b61a-2306ae6fbe5d",
+      "name": "get repositories"
+    },
+    {
+      "parameters": {
+        "jsCode": "const items = $input.all();\n\n// Separate profile and repos\nlet profile = null;\nconst repos = [];\n\nfor (const item of items) {\n  // Profile object has `login` AND `public_repos`\n  if (item.json.login && item.json.public_repos !== undefined) {\n    profile = item.json;\n  }\n  // Repo objects have `name` AND `stargazers_count`\n  else if (item.json.name && item.json.stargazers_count !== undefined) {\n    repos.push(item.json);\n  }\n}\n\n// Safety\nconst now = new Date();\n\n// Analysis\nconst languageCount = {};\nlet totalStars = 0;\nlet inactiveRepos = 0;\n\nfor (const repo of repos) {\n  if (repo.language) {\n    languageCount[repo.language] =\n      (languageCount[repo.language] || 0) + 1;\n  }\n\n  totalStars += repo.stargazers_count || 0;\n\n  const updatedAt = new Date(repo.updated_at);\n  const monthsInactive =\n    (now - updatedAt) / (1000 * 60 * 60 * 24 * 30);\n\n  if (monthsInactive > 6) {\n    inactiveRepos++;\n  }\n}\n\n// Top languages\nconst topLanguages = Object.entries(languageCount)\n  .sort((a, b) => b[1] - a[1])\n  .map(([lang]) => lang)\n  .slice(0, 3);\n\n// Activity level\nlet activityLevel = \"high\";\nif (inactiveRepos > repos.length / 2) {\n  activityLevel = \"low\";\n} else if (inactiveRepos > 0) {\n  activityLevel = \"medium\";\n}\n\n// Roast hooks\nconst roastHooks = [];\nif (inactiveRepos > 3) roastHooks.push(\"many inactive repositories\");\nif (totalStars < 5) roastHooks.push(\"almost no stars\");\nif (topLanguages.length > 2) roastHooks.push(\"language hopping\");\nif (repos.length < 5) roastHooks.push(\"very few projects\");\n\nreturn [\n  {\n    json: {\n      username: profile?.login,\n      display_name: profile?.name,\n      repo_count: repos.length,\n      top_languages: topLanguages,\n      total_stars: totalStars,\n      inactive_repo_count: inactiveRepos,\n      activity_level: activityLevel,\n      roast_hooks: roastHooks,\n    }\n  }\n];\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -320,
+        80
+      ],
+      "id": "f312f1f7-5c3b-4df7-ae27-1ccc5c59821c",
+      "name": "fine repositories"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "d7717c0d-f55a-479b-b9c1-774b7cc3ab1e",
+              "name": "prompt",
+              "value": "=You are Santa Claus reviewing a developer's GitHub profile for Christmas.\n\nBe funny, playful, and light-hearted.\nDo NOT insult, abuse, or shame.\nKeep it friendly and festive.\n\nGitHub summary:\n- Total repositories: {{$json.repo_count}}\n- Top languages: {{$json.top_languages.join(\", \")}}\n- Total stars: {{$json.total_stars}}\n- Inactive repositories: {{$json.inactive_repo_count}}\n- Activity level: {{$json.activity_level}}\n\nThings Santa noticed:\n{{$json.roast_hooks.join(\", \")}}\n\nWrite a short Christmas-style roast (4–6 sentences).\nEnd with a Santa-style sign-off like:\n\"Ho ho ho! 🎅\"\n",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        -144,
+        80
+      ],
+      "id": "ddb2719a-ade7-4b63-9e11-9e7f3ab345be",
+      "name": "set"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "={{ $json.prompt }}",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3,
+      "position": [
+        80,
+        80
+      ],
+      "id": "4b06d017-83d0-4d7c-8e27-27ba78a6d20e",
+      "name": "roasting santa"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+      "typeVersion": 1,
+      "position": [
+        64,
+        240
+      ],
+      "id": "0023f2a2-2bef-4740-bfc9-c706f62d3928",
+      "name": "gemini",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "BOR46D16RNpgRfdP",
+          "name": "suraj"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "WhatsApp Trigger": {
+      "main": [
+        [
+          {
+            "node": "clean output",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If": {
+      "main": [
+        [
+          {
+            "node": "get git account",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Send message1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send message": {
+      "main": [
+        []
+      ]
+    },
+    "clean output": {
+      "main": [
+        [
+          {
+            "node": "If",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "get git account": {
+      "main": [
+        [
+          {
+            "node": "get repositories",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "get repositories": {
+      "main": [
+        [
+          {
+            "node": "fine repositories",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "fine repositories": {
+      "main": [
+        [
+          {
+            "node": "set",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "set": {
+      "main": [
+        [
+          {
+            "node": "roasting santa",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "roasting santa": {
+      "main": [
+        [
+          {
+            "node": "Send message",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "gemini": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "roasting santa",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "4f8e379a-08b9-46f7-81b8-de178ebdca7e",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "70dee595ac90af63088ddc06029f48f3c8185d450acb7ff5d2f53abff3111416"
+  },
+  "id": "YzqhYy409coVXExI",
+  "tags": []
+}
